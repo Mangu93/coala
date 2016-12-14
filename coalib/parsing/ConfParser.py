@@ -15,11 +15,14 @@ class ConfParser:
                  comment_seperators=('#',),
                  key_delimiters=(',', ' '),
                  section_name_surroundings=MappingProxyType({'[': ']'}),
-                 remove_empty_iter_elements=True):
-        self.line_parser = LineParser(key_value_delimiters,
-                                      comment_seperators,
-                                      key_delimiters,
-                                      section_name_surroundings)
+                 remove_empty_iter_elements=True,
+                 key_value_append_delimiters=('+=',)):
+        self.line_parser = LineParser(
+            key_value_delimiters,
+            comment_seperators,
+            key_delimiters,
+            section_name_surroundings,
+            key_value_append_delimiters=key_value_append_delimiters)
 
         self.__remove_empty_iter_elements = remove_empty_iter_elements
 
@@ -86,7 +89,11 @@ class ConfParser:
         current_keys = []
 
         for line in lines:
-            section_name, keys, value, comment = self.line_parser.parse(line)
+            (section_name,
+             keys,
+             value,
+             append,
+             comment) = self.line_parser._parse(line)
 
             if comment != '':
                 self.__add_comment(current_section, comment, origin)
@@ -113,6 +120,7 @@ class ConfParser:
                         Setting(key,
                                 value,
                                 origin,
+                                to_append=append,
                                 # Start ignoring PEP8Bear, PycodestyleBear*
                                 # they fail to resolve this
                                 remove_empty_iter_elements=
@@ -126,6 +134,7 @@ class ConfParser:
                             Setting(key,
                                     value,
                                     origin,
+                                    to_append=append,
                                     # Start ignoring PEP8Bear, PycodestyleBear*
                                     # they fail to resolve this
                                     remove_empty_iter_elements=

@@ -26,7 +26,19 @@ class ConfWriterTest(unittest.TestCase):
                     '    key\\\\backslash = value\\\\backslash\n'
                     '    key\\,comma = value,comma\n'
                     '    key\\#hash = value\\#hash\n'
-                    '    key\\.dot = value.dot\n')
+                    '    key\\.dot = value.dot\n'
+                    '    a_default = val, val2\n')
+
+    append_example_file = ('[defaults]\n'
+                           'a = 4\n'
+                           'b = 4,5,6\n'
+                           'c = 4,5\n'
+                           'd = 4\n'
+                           '[defaults.new]\n'
+                           'a = 4,5,6,7\n'
+                           'b = 4,5,6,7\n'
+                           'c = 4,5,6,7\n'
+                           'd = 4,5,6,7\n')
 
     def setUp(self):
         self.file = os.path.join(tempfile.gettempdir(), 'ConfParserTestFile')
@@ -65,7 +77,34 @@ class ConfWriterTest(unittest.TestCase):
                        'key\\\\backslash = value\\\\backslash\n',
                        'key\\,comma = value,comma\n',
                        'key\\#hash = value\\#hash\n',
-                       'key\\.dot = value.dot\n']
+                       'key\\.dot = value.dot\n',
+                       'a_default += val2\n']
+        self.uut.write_sections(self.conf_parser.parse(self.file))
+        self.uut.close()
+
+        with open(self.write_file_name, 'r') as f:
+            lines = f.readlines()
+
+        self.assertEqual(result_file, lines)
+
+    def test_append(self):
+        with open(self.file, 'w', encoding='utf-8') as file:
+            file.write(self.append_example_file)
+
+        result_file = ['[Default]\n',
+                       '[defaults]\n',
+                       'a = 4\n',
+                       'b = 4,5,6\n',
+                       'c = 4,5\n',
+                       'd = 4\n',
+                       '[defaults.new]\n',
+                       'b += 7\n',
+                       'c += 6, 7\n',
+                       'a, d += 5, 6, 7\n']
+
+        sections = self.conf_parser.parse(self.file)
+        for (_, section) in list(sections.items()):
+            section.set_default_section(sections)
         self.uut.write_sections(self.conf_parser.parse(self.file))
         self.uut.close()
 
